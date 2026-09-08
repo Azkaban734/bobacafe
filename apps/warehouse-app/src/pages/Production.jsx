@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useConfig } from '../context/ConfigContext'
-import { PlusCircle, Package, ArrowDown, ArrowUp, X, CheckCircle, AlertTriangle, Trash2 } from 'lucide-react'
+import { PlusCircle, Package, ArrowDown, ArrowUp, X, CheckCircle, AlertTriangle, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
@@ -8,6 +8,7 @@ export default function Production() {
   const { config, data, addTransaction, deleteProductionEvent } = useConfig()
   
   const [isCreating, setIsCreating] = useState(false)
+  const [expanded, setExpanded] = useState({})
   
   const [outputId, setOutputId] = useState('')
   const [outputQty, setOutputQty] = useState('')
@@ -100,65 +101,84 @@ export default function Production() {
         </div>
       ) : (
         <div className="space-y-4">
-          {productionEvents.map(ev => (
-            <div key={ev.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-50">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-medium">{ev.id}</span>
-                    <span className="text-sm font-medium text-gray-900">{ev.date}</span>
-                  </div>
-                  <p className="text-xs text-gray-400">Created: {new Date(ev.timestamp).toLocaleString()}</p>
-                </div>
-                <button 
-                  onClick={() => {
-                    if (window.confirm("Delete this production event? This will reverse the inventory changes.")) {
-                      deleteProductionEvent(ev.id)
-                    }
-                  }}
-                  className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                  title="Delete event"
+          {productionEvents.map(ev => {
+            const isExpanded = expanded[ev.id]
+            return (
+              <div key={ev.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <div 
+                  className={`flex items-center justify-between cursor-pointer ${isExpanded ? 'mb-4 pb-4 border-b border-gray-50' : ''}`}
+                  onClick={() => setExpanded(prev => ({ ...prev, [ev.id]: !prev[ev.id] }))}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex-1">
-                  <h4 className="text-xs font-semibold text-green-700 mb-2 uppercase tracking-wider flex items-center gap-1">
-                    <ArrowUp className="w-3 h-3" /> Yield
-                  </h4>
-                  {ev.yield ? (
-                    <div className="bg-green-50/50 rounded-lg p-3 border border-green-100 flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-800">{ingredientName(ev.yield.ingredientId)}</span>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-green-700">+{ev.yield.quantity}</span>
-                        <span className="text-xs text-gray-500 ml-1">{ingredientUnit(ev.yield.ingredientId)}</span>
+                  <div className="flex items-center gap-3">
+                    <button className="text-gray-400 hover:bg-gray-50 p-1 rounded">
+                      {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded font-medium">{ev.id}</span>
+                        <span className="text-sm font-medium text-gray-900">{ev.date}</span>
+                        {!isExpanded && ev.yield && (
+                          <span className="ml-2 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                            {ingredientName(ev.yield.ingredientId)} (+{ev.yield.quantity})
+                          </span>
+                        )}
                       </div>
+                      <p className="text-xs text-gray-400">Created: {new Date(ev.timestamp).toLocaleString()}</p>
                     </div>
-                  ) : <div className="text-sm text-gray-400">No yield recorded</div>}
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (window.confirm("Delete this production event? This will reverse the inventory changes.")) {
+                        deleteProductionEvent(ev.id)
+                      }
+                    }}
+                    className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Delete event"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
                 
-                <div className="flex-1">
-                  <h4 className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wider flex items-center gap-1">
-                    <ArrowDown className="w-3 h-3" /> Usage
-                  </h4>
-                  <div className="space-y-2">
-                    {ev.usages.map(u => (
-                      <div key={u.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100 flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-800">{ingredientName(u.ingredientId)}</span>
-                        <div className="text-right">
-                          <span className="text-sm font-bold text-amber-700">{Math.abs(u.quantity)}</span>
-                          <span className="text-xs text-gray-500 ml-1">{ingredientUnit(u.ingredientId)}</span>
+                {isExpanded && (
+                  <div className="flex flex-col md:flex-row gap-6 ml-10">
+                    <div className="flex-1">
+                      <h4 className="text-xs font-semibold text-green-700 mb-2 uppercase tracking-wider flex items-center gap-1">
+                        <ArrowUp className="w-3 h-3" /> Yield
+                      </h4>
+                      {ev.yield ? (
+                        <div className="bg-green-50/50 rounded-lg p-3 border border-green-100 flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-800">{ingredientName(ev.yield.ingredientId)}</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-green-700">+{ev.yield.quantity}</span>
+                            <span className="text-xs text-gray-500 ml-1">{ingredientUnit(ev.yield.ingredientId)}</span>
+                          </div>
                         </div>
+                      ) : <div className="text-sm text-gray-400">No yield recorded</div>}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h4 className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wider flex items-center gap-1">
+                        <ArrowDown className="w-3 h-3" /> Usage
+                      </h4>
+                      <div className="space-y-2">
+                        {ev.usages.map(u => (
+                          <div key={u.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100 flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-800">{ingredientName(u.ingredientId)}</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-amber-700">{Math.abs(u.quantity)}</span>
+                              <span className="text-xs text-gray-500 ml-1">{ingredientUnit(u.ingredientId)}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {ev.usages.length === 0 && <div className="text-sm text-gray-400">No usage recorded</div>}
                       </div>
-                    ))}
-                    {ev.usages.length === 0 && <div className="text-sm text-gray-400">No usage recorded</div>}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
