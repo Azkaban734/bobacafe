@@ -47,16 +47,15 @@ export default function DailyLedger({ initialIngredientId }) {
       .filter(a => a.store === selectedStore && a.counts[selectedId] != null)
       .sort((a, b) => a.date.localeCompare(b.date))
 
-    if (storeAudits.length === 0) return { auditInfo: null, ledgerRows: [] }
-
     // Baseline: last audit at or before `from`, else the earliest audit we have
-    const baseAudit = [...storeAudits].filter(a => a.date <= from).pop()
-      ?? storeAudits[0]
+    const baseAudit = storeAudits.length > 0 
+      ? ([...storeAudits].filter(a => a.date <= from).pop() ?? storeAudits[0])
+      : null
 
-    const startDate = baseAudit.date
-    const base      = baseAudit.counts[selectedId] ?? 0
+    const startDate = baseAudit?.date ?? from
+    const base      = baseAudit?.counts[selectedId] ?? 0
 
-    const baseAuditTime = baseAudit.timestamp ?? `${startDate}T23:59:59`
+    const baseAuditTime = baseAudit?.timestamp ?? '0000-00-00T23:59:59'
 
     // Build per-day activity map
     const byDate = {}
@@ -215,7 +214,7 @@ export default function DailyLedger({ initialIngredientId }) {
       .reverse()
 
     return {
-      auditInfo: { date: startDate, base },
+      auditInfo: { date: startDate, base, isAssumed: !baseAudit },
       ledgerRows: displayRows,
     }
   }, [selectedId, selectedStore, data, sales, posWaste, recipes, from, to, today])
@@ -318,7 +317,7 @@ export default function DailyLedger({ initialIngredientId }) {
                 <h2 className="text-lg font-semibold text-gray-900">{selectedIng?.name}</h2>
                 <span className="text-sm text-gray-400">{selectedIng?.unit}</span>
                 <span className="text-xs text-gray-400 ml-auto">
-                  {t('ledger.auditBase', { date: auditInfo.date, base: auditInfo.base })}
+                  {auditInfo.isAssumed ? t('ledger.noAudit') : t('ledger.auditBase', { date: auditInfo.date, base: auditInfo.base })}
                 </span>
               </div>
 
