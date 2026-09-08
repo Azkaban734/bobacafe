@@ -142,7 +142,7 @@ export function useCalcs() {
         let time = `${date}T12:00:00`
         if (t.type === 'adjustment' && t.poId) time = getPoTime(t.poId)
         if (time > cutTime) {
-          txSinceLastAudit[store][ingId] += (t.type === 'adjustment' ? qty : -qty)
+          txSinceLastAudit[store][ingId] += ((t.type === 'adjustment' || t.type === 'production') ? qty : -qty)
         }
       }
     }

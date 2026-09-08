@@ -105,6 +105,12 @@ export default function DailyLedger({ initialIngredientId }) {
           } else {
             byDate[t.date].details.push({ kind: 'adjustment', qty: t.quantity, time })
           }
+        } else if (t.type === 'production') {
+          if (t.quantity > 0) {
+            byDate[t.date].details.push({ kind: 'production-yield', qty: t.quantity, prodId: t.poId, product: t.reason, time })
+          } else {
+            byDate[t.date].details.push({ kind: 'production-usage', qty: Math.abs(t.quantity), prodId: t.poId, product: t.reason, time })
+          }
         } else {
           byDate[t.date].details.push({ kind: t.type, qty: t.quantity, time })
         }
@@ -178,10 +184,10 @@ export default function DailyLedger({ initialIngredientId }) {
         } else if (ev.kind === 'transfer-out') {
           running = r1(running - ev.qty)
           dayTransferOut = r1(dayTransferOut + ev.qty)
-        } else if (ev.kind === 'sale' || ev.kind === 'waste') {
-          running = r1(running - ev.consumed)
-          dayUsage = r1(dayUsage + ev.consumed)
-        } else if (ev.kind === 'adjustment') {
+        } else if (ev.kind === 'sale' || ev.kind === 'waste' || ev.kind === 'production-usage') {
+          running = r1(running - (ev.consumed ?? ev.qty))
+          dayUsage = r1(dayUsage + (ev.consumed ?? ev.qty))
+        } else if (ev.kind === 'adjustment' || ev.kind === 'production-yield') {
           running = r1(running + ev.qty)
           dayReceived = r1(dayReceived + ev.qty)
         } else {
@@ -412,6 +418,8 @@ export default function DailyLedger({ initialIngredientId }) {
                                         d.kind === 'waste'        ? 'bg-amber-100 text-amber-700' :
                                         d.kind === 'po'           ? 'bg-green-100 text-green-700' :
                                         d.kind === 'adjustment'   ? 'bg-purple-100 text-purple-700' :
+                                        d.kind === 'production-yield' ? 'bg-green-100 text-green-700' :
+                                        d.kind === 'production-usage' ? 'bg-amber-100 text-amber-700' :
                                         d.kind === 'audit'        ? 'bg-purple-100 text-purple-700' :
                                         d.kind === 'transfer-out' ? 'bg-orange-100 text-orange-700' :
                                         d.kind === 'transfer-in'  ? 'bg-teal-100 text-teal-700' :
@@ -420,6 +428,8 @@ export default function DailyLedger({ initialIngredientId }) {
                                         {d.kind === 'sale'         ? t('ledger.kindSale') :
                                          d.kind === 'waste'        ? t('ledger.kindWaste') :
                                          d.kind === 'po'           ? `PO-${d.poId}` :
+                                         d.kind === 'production-yield' ? `YIELD (${d.prodId})` :
+                                         d.kind === 'production-usage' ? `USAGE (${d.prodId})` :
                                          d.kind === 'adjustment'   ? t('ledger.kindAdj') :
                                          d.kind === 'audit'        ? t('ledger.kindAudit') :
                                          d.kind === 'transfer-out' ? t('ledger.kindTransferOut') :
@@ -442,11 +452,12 @@ export default function DailyLedger({ initialIngredientId }) {
                                             )}
                                           </span>
                                         : (() => {
-                                            const isPositive = d.kind === 'po' || d.kind === 'transfer-in'
+                                            const isPositive = d.kind === 'po' || d.kind === 'transfer-in' || d.kind === 'production-yield'
                                               || (d.kind === 'adjustment' && d.qty >= 0)
                                             return (
                                               <span className={`font-semibold flex-shrink-0 ${
                                                 d.kind === 'transfer-out'                          ? 'text-orange-600' :
+                                                d.kind === 'production-usage'                      ? 'text-red-600' :
                                                 d.kind === 'transfer-in'                           ? 'text-teal-700' :
                                                 d.kind === 'adjustment' && d.qty < 0              ? 'text-red-600' :
                                                 isPositive                                         ? 'text-green-700' :

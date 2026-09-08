@@ -222,6 +222,14 @@ export function ConfigProvider({ children }) {
     })
   }, [])
 
+  const deleteProductionEvent = useCallback((poId) => {
+    setDataState(prev => {
+      const toDelete = prev.transactions.filter(t => t.poId === poId && t.type === 'production')
+      toDelete.forEach(d => queryD1(`DELETE FROM transactions WHERE id = ?`, [d.id]).catch(console.error))
+      return { ...prev, transactions: prev.transactions.filter(t => t.poId !== poId || t.type !== 'production') }
+    })
+  }, [])
+
   const deleteTransaction = useCallback((id) => {
     setDataState(prev => {
       const tx = prev.transactions.find(t => t.id === id)
@@ -567,7 +575,7 @@ export function ConfigProvider({ children }) {
     <ConfigContext.Provider value={{
       config, setConfig,
       data: filteredData, setData,
-      addAudit, deleteAudit, updateAudit, addTransaction, deleteTransaction,
+      addAudit, deleteAudit, updateAudit, addTransaction, deleteTransaction, deleteProductionEvent,
       addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, revertPoToSent, updatePoReceivedDate,
       sales, posWaste, usingLiveData, salesCache, clearSalesCache,
       stores, visibleStores, suppressedStores, toggleStoreVisibility: () => {},
