@@ -4,7 +4,7 @@ import { PlusCircle, Package, ArrowDown, ArrowUp, X, CheckCircle, AlertTriangle,
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export default function Production() {
+export default function Production({ role }) {
   const { config, data, addTransaction, deleteProductionEvent } = useConfig()
   
   const [isCreating, setIsCreating] = useState(false)
@@ -126,18 +126,20 @@ export default function Production() {
                       <p className="text-xs text-gray-400">Created: {new Date(ev.timestamp).toLocaleString()}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (window.confirm("Delete this production event? This will reverse the inventory changes.")) {
-                        deleteProductionEvent(ev.id)
-                      }
-                    }}
-                    className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                    title="Delete event"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {role !== 'cook' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (window.confirm("Delete this production event? This will reverse the inventory changes.")) {
+                          deleteProductionEvent(ev.id)
+                        }
+                      }}
+                      className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Delete event"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 
                 {isExpanded && (

@@ -30,11 +30,16 @@ export default function App() {
 function LoginScreen({ onLogin }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
-  const PINS = { admin: window.BC_PINS?.inv_admin || '7530', warehouse: window.BC_PINS?.warehouse || '1122' }
+  const PINS = { 
+    admin: window.BC_PINS?.inv_admin || '7530', 
+    warehouse: window.BC_PINS?.warehouse || '1122',
+    cook: window.BC_PINS?.cook || '3344'
+  }
 
   const submit = () => {
     if (pin === PINS.admin) { onLogin('admin'); return }
     if (pin === PINS.warehouse) { onLogin('warehouse'); return }
+    if (pin === PINS.cook) { onLogin('cook'); return }
     setError(true); setPin('')
   }
 
@@ -78,7 +83,35 @@ function AppRoot() {
   }
 
   if (!role) return <LoginScreen onLogin={handleLogin} />
+  if (role === 'cook') return <CookAppContent role={role} onLogout={handleLogout} />
   return <AppContent role={role} onLogout={handleLogout} />
+}
+
+function CookAppContent({ role, onLogout }) {
+  const handleLoad = () => window.location.reload()
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <Factory className="w-5 h-5 text-blue-600" />
+          <span className="font-semibold text-gray-900 text-sm">Kitchen Production</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={handleLoad} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md"><RefreshCw className="w-4 h-4" /></button>
+          <button onClick={onLogout} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md"><LogOut className="w-4 h-4" /></button>
+        </div>
+      </header>
+
+      {/* Main Content Area - Full height for cook */}
+      <main className="flex-1 overflow-y-auto pb-safe">
+        <Routes>
+          <Route path="*" element={<Production role={role} />} />
+        </Routes>
+      </main>
+    </div>
+  )
 }
 
 function AppContent({ role, onLogout }) {
@@ -112,7 +145,7 @@ function AppContent({ role, onLogout }) {
           <Route path="/" element={<Navigate to="/inventory" replace />} />
           <Route path="/inventory" element={<InventoryLevels />} />
           <Route path="/pos" element={<PurchaseOrders />} />
-          <Route path="/production" element={<Production />} />
+          <Route path="/production" element={<Production role={role} />} />
           <Route path="/adjustments" element={<Adjustments />} />
           <Route path="/recipes" element={<Recipes />} />
           <Route path="/audit" element={<Audit />} />

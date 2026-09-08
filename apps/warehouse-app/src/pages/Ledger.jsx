@@ -1,4 +1,5 @@
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useMemo, Fragment, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useConfig, useCalcs } from '../context/ConfigContext'
 import { useLanguage } from '../context/LanguageContext'
 import { getProductType } from '../utils/productTypes'
@@ -10,13 +11,32 @@ export default function DailyLedger({ initialIngredientId }) {
   const calcs = useCalcs()
   const { t } = useLanguage()
   const { recipes } = config
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const selectedStore = 'Warehouse'
   const [from,          setFrom]          = useState(reportFrom)
   const [to,            setTo]            = useState(todayStr())
-  const [selectedId,    setSelectedId]    = useState(initialIngredientId ?? null)
+  const [selectedIdState, setSelectedIdState] = useState(() => {
+    const id = searchParams.get('ingredientId')
+    return id ? Number(id) : (initialIngredientId ?? null)
+  })
   const [search,        setSearch]        = useState('')
   const [expandedDate,  setExpandedDate]  = useState(null)
+
+  // Sync state to URL
+  useEffect(() => {
+    const urlId = searchParams.get('ingredientId')
+    if (selectedIdState && String(selectedIdState) !== urlId) {
+      setSearchParams({ ingredientId: selectedIdState }, { replace: true })
+    } else if (!selectedIdState && urlId) {
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('ingredientId')
+      setSearchParams(newParams, { replace: true })
+    }
+  }, [selectedIdState, searchParams, setSearchParams])
+
+  const selectedId = selectedIdState
+  const setSelectedId = setSelectedIdState
 
   const today       = todayStr()
 
