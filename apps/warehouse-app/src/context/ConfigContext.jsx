@@ -211,15 +211,11 @@ export function ConfigProvider({ children }) {
   }, [])
 
   const addTransaction = useCallback((tx) => {
-    setDataState(prev => {
-      const id = `T-${String(prev._nextTxId).padStart(3, '0')}`
-      const newTx = { id, ...tx, timestamp: tx.timestamp || new Date().toISOString() }
-      queryD1(
-        `INSERT INTO transactions (id, store, date, type, ingredientId, quantity, poId, reason, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newTx.id, newTx.store, newTx.date, newTx.type, newTx.ingredientId, newTx.quantity, newTx.poId || null, newTx.reason || null, newTx.timestamp]
-      ).catch(console.error)
-      return { ...prev, transactions: [...prev.transactions, newTx], _nextTxId: prev._nextTxId + 1 }
-    })
+    const newTx = { ...tx, id: tx.id || `T-${Date.now()}`, timestamp: tx.timestamp || new Date().toISOString() }
+    queryD1(`INSERT INTO transactions (id, store, date, type, ingredientId, quantity, poId, reason, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+      [newTx.id, newTx.store, newTx.date, newTx.type, newTx.ingredientId, newTx.quantity, newTx.poId || null, newTx.reason || null, newTx.timestamp]
+    ).catch(console.error)
+    setDataState(prev => ({ ...prev, transactions: [...prev.transactions, newTx] }))
   }, [])
 
   const deleteProductionEvent = useCallback((poId) => {

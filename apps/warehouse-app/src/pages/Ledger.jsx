@@ -92,7 +92,7 @@ export default function DailyLedger({ initialIngredientId }) {
     data.transactions
       .filter(t => t.ingredientId === selectedId && t.store === selectedStore && t.date >= startDate)
       .forEach(t => {
-        let time = t.timestamp || `${t.date}T12:00:00`
+        let time = t.timestamp ? t.timestamp.replace(' ', 'T') : `${t.date}T12:00:00`
         if (t.type === 'adjustment' && t.poId) time = getPoTime(t.poId)
         if (time <= baseAuditTime) return
 

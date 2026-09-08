@@ -139,7 +139,7 @@ export function useCalcs() {
       const cutAudit = lastIngAudit?.date ?? '0000-00-00'
       const cutTime = lastIngAudit?.timestamp ?? `${cutAudit}T23:59:59`
       if (date >= cutAudit) {
-        let time = t.timestamp || `${date}T12:00:00`
+        let time = t.timestamp ? t.timestamp.replace(' ', 'T') : `${date}T12:00:00`
         if (t.type === 'adjustment' && t.poId) time = getPoTime(t.poId)
         if (time > cutTime) {
           txSinceLastAudit[store][ingId] += ((t.type === 'adjustment' || t.type === 'production') ? qty : -qty)
